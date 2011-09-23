@@ -98,6 +98,7 @@ public:
 	BOOL	GetCVertexList(TriObject* tri);
 	BOOL	GetCFaceList(TriObject* tri);
 	BOOL	GetMeshNormals(TriObject* tri);
+	BOOL	GetMappingChannel(TriObject* tri, bool flip_normals, int channel);
 	BOOL	GetMesh(TriObject* tri, bool flip_normals);
 
 	// Camera object

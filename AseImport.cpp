@@ -1205,6 +1205,62 @@ BOOL AsciiImp::GetCFaceList(TriObject* tri)
 	return TRUE;
 }
 
+// Get additional mesh mapping channel
+BOOL AsciiImp::GetMappingChannel(TriObject* tri, bool flip_normals, int channel)
+{
+	BOOL done = FALSE;
+	BOOL done2 = FALSE;
+	TCHAR* token;
+	int i;
+
+	do
+	{
+		token = GetToken();
+		if (Compare(token, "}"))
+			done = TRUE;
+		else if (Compare(token, ID_MESH_NUMTVERTEX)) 
+			tri->mesh.setNumMapVerts(channel, GetInt(), TRUE);
+		else if (Compare(token, ID_MESH_TVERTLIST)) 
+		{
+			done2 = FALSE;
+			do
+			{
+				token = GetToken();
+				if (Compare(token, "}"))
+					done2 = TRUE;
+				else if (Compare(token, ID_MESH_TVERT)) 
+				{
+					i = GetInt();
+					tri->mesh.setMapVert(channel, i, GetPoint3());
+				}
+			}
+			while(!done2);
+		}
+		else if (Compare(token, ID_MESH_NUMTVFACES)) 
+			tri->mesh.setNumMapFaces(channel, GetInt(), TRUE, 0);
+		else if (Compare(token, ID_MESH_TFACELIST)) 
+		{
+			done2 = FALSE;
+			do
+			{
+				token = GetToken();
+				if (Compare(token, "}"))
+					done2 = TRUE;
+				else if (Compare(token, ID_MESH_TFACE)) 
+				{
+					i = GetInt();
+					TVFace *mapFace = tri->mesh.mapFaces(channel);
+					mapFace[i].t[0] = GetInt();
+					mapFace[i].t[1] = GetInt();
+					mapFace[i].t[2] = GetInt();
+				}
+			}
+			while(!done2);
+		}
+	}
+	while(!done);
+	return TRUE;
+}
 
 // Get face & vertex normals
 BOOL AsciiImp::GetMeshNormals(TriObject* tri)
@@ -1212,7 +1268,8 @@ BOOL AsciiImp::GetMeshNormals(TriObject* tri)
 	BOOL done = FALSE;
 	TCHAR* token;
 	
-	do {
+	do
+	{
 		token = GetToken();
 		if (Compare(token, "}"))
 			done = TRUE;
@@ -1224,7 +1281,8 @@ BOOL AsciiImp::GetMeshNormals(TriObject* tri)
 			tri->mesh.vcFace[faceNum].t[1] = (int)tf.y;
 			tri->mesh.vcFace[faceNum].t[2] = (int)tf.z;
 		}
-	} while (!done);
+	}
+	while (!done);
 	
 	return TRUE;
 }
@@ -1293,6 +1351,12 @@ BOOL AsciiImp::GetMesh(TriObject* tri, bool flip_normals)
 		else if (Compare(token, ID_MESH_CFACELIST)) 
 		{
 			GetCFaceList(tri);
+		}
+		else if (Compare(token, ID_MESH_MAPPINGCHANNEL)) 
+		{
+			int channel = GetInt();
+			tri->mesh.setMapSupport(channel, TRUE);
+			GetMappingChannel(tri, flip_normals, channel);
 		}
 		else if (Compare(token, ID_TIMEVALUE)) 
 		{
