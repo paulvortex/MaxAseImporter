@@ -1036,7 +1036,7 @@ DWORD AsciiImp::GetSmoothingGroups(TCHAR* smStr)
 {
 	char* token;
 	DWORD smGroup = 0;
-	
+
 	token = _tcstok(smStr, ",");
 	while(token) 
 	{
@@ -1084,12 +1084,20 @@ BOOL AsciiImp::GetFaceList(TriObject* tri, bool flip_normals)
 			f->setEdgeVis(0, GetInt());
 		else if (Compare(token, "BC:")) 
 			f->setEdgeVis(1, GetInt());
-		else if (Compare(token, ID_MESH_SMOOTHING)) 
+		// check for smoothing and mtl id
+		if (Compare(token, ID_MESH_SMOOTHING)) 
 		{
+			// some bad ASE coders white no 0 if there is no smooth group
 			GetToken();
-			f->setSmGroup(GetSmoothingGroups(token));
+			if (strncmp(token, "*", 1))
+			{
+				f->setSmGroup(GetSmoothingGroups(token));
+				continue;
+			}
+			f->setSmGroup(0);
+			// otherwise wee proceed next to not 'eat up' materials
 		}
-		else if (Compare(token, ID_MESH_MTLID)) 
+		if (Compare(token, ID_MESH_MTLID)) 
 			f->setMatID((MtlID)GetInt());
 		// todo: parse error
 	}
