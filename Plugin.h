@@ -31,6 +31,8 @@ extern HINSTANCE hInstance;
 
 typedef Tab<INodeTab*> NodeTabTab;
 
+extern double StringToDouble(const char *str, char **endptr);
+
 class GroupManager 
 {
 public:
