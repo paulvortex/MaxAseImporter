@@ -8,8 +8,6 @@
 
 #include "Plugin.h"
 
-extern ClassDesc2* GetExportMD3Desc();
-
 HINSTANCE hInstance;
 int controlsInit = FALSE;
 
@@ -45,7 +43,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,ULONG fdwReason,LPVOID lpvReserved)
 // could purchase the DLL if they don't have it.
 __declspec(dllexport) const TCHAR* LibDescription()
 {
-	return GetString(IDS_LIBDESCRIPTION);
+	return _T("Ascii Scene Importer");
 }
 
 // This function returns the number of plug-in classes this DLL
@@ -61,11 +59,12 @@ __declspec(dllexport) ClassDesc* LibClassDesc(int i)
 	switch(i)
 	{
 		case 0:
-			return GetExportMD3Desc();
+			return GetAsciiImpDesc();
 		default:
 			return 0;
 	}
 }
+
 
 // This function returns a pre-defined constant indicating the version of 
 // the system under which it was compiled.  It is used to allow the system

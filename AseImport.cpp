@@ -10,7 +10,6 @@
 
 #include "Plugin.h"
 
-
 #ifdef _DEBUG
 TCHAR prev1Token[512];
 TCHAR prev2Token[512];
@@ -47,7 +46,8 @@ BOOL GroupManager::EndGroup(Interface* i)
 	delete group;
 	
 	// If rIsRecording() is true here, it means that we are in a nested group.
-	if (IsRecording()) {
+	if (IsRecording())
+	{
 		// Support nested groups - add the current groupNode to the parent group
 		AddNode(gnode);
 	}
@@ -225,9 +225,8 @@ Matrix3 AsciiImp::GetNodeTM(TSTR& name, DWORD& iFlags)
 {
 	Matrix3 mat;
 	TCHAR* token;
-	
+
 	iFlags = 0;
-	
 	do 
 	{
 		token = GetToken();
@@ -935,47 +934,52 @@ DWORD AsciiImp::GetSmoothingGroups(TCHAR* smStr)
 }
 
 // Get a list of faces
-BOOL AsciiImp::GetFaceList(TriObject* tri)
+BOOL AsciiImp::GetFaceList(TriObject* tri, bool flip_normals)
 {
 	BOOL done = FALSE;
 	TCHAR* token;
-	
-	do {
+	Face* f;
+
+	do
+	{
 		token = GetToken();
 		if (Compare(token, "}"))
 			done = TRUE;
 		else if (Compare(token, ID_MESH_FACE)) 
 		{
 			int faceNo = GetInt();
-			Face* f = &tri->mesh.faces[faceNo];
-			
-			// Get vertex assignment
-			GetToken(); // Junk
-			f->v[0] = GetInt();
-			GetToken(); // Junk
-			f->v[1] = GetInt();
-			GetToken(); // Junk
-			f->v[2] = GetInt();
-			
-			// Get face visibility
-			GetToken(); // Junk
-			f->setEdgeVis(0, GetInt());
-			token = GetToken(); // Junk
-			f->setEdgeVis(1, GetInt());
-			token = GetToken(); // Junk
-			f->setEdgeVis(2, GetInt());
-			
-			// Get face smoothing group
-			GetToken(); // Junk
-			token = GetToken();
-			if (!Compare(token, ID_MESH_MTLID)) 
-			{
-				f->setSmGroup(GetSmoothingGroups(token));
-				GetToken(); // Junk (MESH_MTL_ID)
-			}
-			f->setMatID((MtlID)GetInt());
+			f = &tri->mesh.faces[faceNo];
 		}
-	} while (!done);
+		else if (Compare(token, "A:")) 
+		{
+			if (flip_normals)
+				f->v[2] = GetInt();
+			else
+				f->v[0] = GetInt();
+		}
+		else if (Compare(token, "B:")) 
+			f->v[1] = GetInt();
+		else if (Compare(token, "C:")) 
+		{
+			if (flip_normals)
+				f->v[0] = GetInt();
+			else
+				f->v[2] = GetInt();
+		}
+		else if (Compare(token, "AB:")) 
+			f->setEdgeVis(0, GetInt());
+		else if (Compare(token, "BC:")) 
+			f->setEdgeVis(1, GetInt());
+		else if (Compare(token, ID_MESH_SMOOTHING)) 
+		{
+			GetToken();
+			f->setSmGroup(GetSmoothingGroups(token));
+		}
+		else if (Compare(token, ID_MESH_MTLID)) 
+			f->setMatID((MtlID)GetInt());
+		// todo: parse error
+	}
+	while (!done);
 	
 	return TRUE;
 }
@@ -984,9 +988,11 @@ BOOL AsciiImp::GetFaceList(TriObject* tri)
 BOOL AsciiImp::GetTVertexList(TriObject* tri)
 {
 	BOOL done = FALSE;
+	UVVert UV;
 	TCHAR* token;
 	
-	do {
+	do
+	{
 		token = GetToken();
 		if (Compare(token, "}"))
 			done = TRUE;
@@ -994,15 +1000,15 @@ BOOL AsciiImp::GetTVertexList(TriObject* tri)
 		{
 			int vxNum = GetInt();
 			Point3 vx = GetPoint3();
-			tri->mesh.setTVert(vxNum, vx);
+			tri->mesh.setTVert(vxNum, vx.x, vx.y, vx.z);
 		}
-	} while (!done);
+	} while(!done);
 	
 	return TRUE;
 }
 
 // Get a list of texture faces
-BOOL AsciiImp::GetTFaceList(TriObject* tri)
+BOOL AsciiImp::GetTFaceList(TriObject* tri, bool flip_normals)
 {
 	BOOL done = FALSE;
 	TCHAR* token;
@@ -1015,9 +1021,18 @@ BOOL AsciiImp::GetTFaceList(TriObject* tri)
 		{
 			int faceNum = GetInt();
 			Point3 tf = GetPoint3();
-			tri->mesh.tvFace[faceNum].t[0] = (int)tf.x;
-			tri->mesh.tvFace[faceNum].t[1] = (int)tf.y;
-			tri->mesh.tvFace[faceNum].t[2] = (int)tf.z;
+			if (flip_normals)
+			{
+				tri->mesh.tvFace[faceNum].t[2] = (int)tf.x;
+				tri->mesh.tvFace[faceNum].t[1] = (int)tf.y;
+				tri->mesh.tvFace[faceNum].t[0] = (int)tf.z;
+			}
+			else
+			{
+				tri->mesh.tvFace[faceNum].t[0] = (int)tf.x;
+				tri->mesh.tvFace[faceNum].t[1] = (int)tf.y;
+				tri->mesh.tvFace[faceNum].t[2] = (int)tf.z;
+			}
 		}
 	} while (!done);
 	
@@ -1094,7 +1109,7 @@ BOOL AsciiImp::GetMeshNormals(TriObject* tri)
 
 
 // Get a full mesh definition and stuff it into the TriObject
-BOOL AsciiImp::GetMesh(TriObject* tri)
+BOOL AsciiImp::GetMesh(TriObject* tri, bool flip_normals)
 {
 	int level = 0;
 	TCHAR* token;
@@ -1139,7 +1154,7 @@ BOOL AsciiImp::GetMesh(TriObject* tri)
 		}
 		else if (Compare(token, ID_MESH_FACE_LIST)) 
 		{
-			GetFaceList(tri);
+			GetFaceList(tri, flip_normals);
 		}
 		else if (Compare(token, ID_MESH_TVERTLIST)) 
 		{
@@ -1147,7 +1162,7 @@ BOOL AsciiImp::GetMesh(TriObject* tri)
 		}
 		else if (Compare(token, ID_MESH_TFACELIST)) 
 		{
-			GetTFaceList(tri);
+			GetTFaceList(tri, flip_normals);
 		}
 		else if (Compare(token, ID_MESH_CVERTLIST)) 
 		{
@@ -1174,6 +1189,7 @@ BOOL AsciiImp::ImportGeomObject()
 	TSTR	nodeName;
 	int 	level = 0;
 	DWORD	iFlags = 0;
+	bool	flip_normals = false;
 	
 	INode* parentNode = NULL;
 	TriObject* tri = CreateNewTriObject();
@@ -1195,6 +1211,8 @@ BOOL AsciiImp::ImportGeomObject()
 		{
 			TSTR tmp;
 			nodeTM = GetNodeTM(tmp, iFlags);
+			if (DotProd(CrossProd(nodeTM.GetRow(0), nodeTM.GetRow(1)), nodeTM.GetRow(2)) < 0.0)
+				flip_normals = true;
 		}
 		else if (Compare(token, ID_NODE_NAME)) 
 		{
@@ -1215,7 +1233,7 @@ BOOL AsciiImp::ImportGeomObject()
 		}
 		else if (Compare(token, ID_MESH)) 
 		{
-			GetMesh(tri);
+			GetMesh(tri, flip_normals);
 			// The mesh has its vertices in world space. 
 			// Transform them to object space
 			Matrix3 invNodeTM = Inverse(nodeTM);
@@ -2023,13 +2041,17 @@ BOOL AsciiImp::GetStandardMtl(Mtl*& mtl)
 				stdMtl->EnableMap(ID_AM, TRUE);
 			}
 		}
-		else if (Compare(token, ID_MAP_DIFFUSE)) {
+		else if (Compare(token, ID_MAP_DIFFUSE))
+		{
 			float amount = 0.0f;
 			Texmap* tex = GetTexture(amount);
-			if (tex) {
+			if (tex)
+			{
 				stdMtl->SetSubTexmap(ID_DI, tex);
 				stdMtl->SetTexmapAmt(ID_DI, amount, 0);
 				stdMtl->EnableMap(ID_DI, TRUE);
+				stdMtl->ActivateTexDisplay(TRUE);
+				stdMtl->SetMtlFlag(MTL_TEX_DISPLAY_ENABLED, TRUE); 
 			}
 		}
 		else if (Compare(token, ID_MAP_SPECULAR)) {
@@ -2449,16 +2471,37 @@ BOOL AsciiImp::GetBitmapTexture(Texmap*& tex, float& amount)
 	TCHAR* token;
 	BitmapTex* bmtex;
 	
-	tex = bmtex = (BitmapTex*)NewDefaultBitmapTex();
 	
-	do {
+	tex = bmtex = (BitmapTex*)NewDefaultBitmapTex();
+	do
+	{
 		token = GetToken();
 		if (Compare(token, "{"))
 			level++;
 		else if (Compare(token, "}"))
 			level--;
-		else if (Compare(token, ID_BITMAP)) {
-			bmtex->SetMapName(GetString());
+		else if (Compare(token, ID_BITMAP))
+		{
+			CStr BitmapName = GetString();
+			if (replace_basepath[0])
+			{
+				// find local path
+				const char *subname;
+				char newname[4096];
+									 subname = strstr(BitmapName, "models\\");
+				if (subname == NULL) subname = strstr(BitmapName, "textures\\");
+				if (subname == NULL) subname = strstr(BitmapName, "particles\\");
+				if (subname == NULL) subname = strstr(BitmapName, "gfx\\");
+				if (subname != NULL)
+				{
+					sprintf(newname, "%s\\%s", replace_basepath, subname);
+					bmtex->SetMapName(newname);
+				}
+				else
+					bmtex->SetMapName(BitmapName);
+			}
+			else
+				bmtex->SetMapName(BitmapName);
 		}
 		else if (Compare(token, ID_TEXAMOUNT)) {
 			amount = GetFloat();

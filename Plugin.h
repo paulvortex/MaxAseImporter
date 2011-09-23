@@ -23,6 +23,8 @@
 
 #define USE_IMPNODES 1
 
+extern char replace_basepath[2048];	
+
 extern ClassDesc* GetAsciiImpDesc();
 
 extern HINSTANCE hInstance;
@@ -88,13 +90,13 @@ public:
 	// GeomObject
 	BOOL	GetVertexList(TriObject* tri);
 	DWORD	GetSmoothingGroups(TCHAR* smStr);
-	BOOL	GetFaceList(TriObject* tri);
+	BOOL	GetFaceList(TriObject* tri, bool flip_normals);
 	BOOL	GetTVertexList(TriObject* tri);
-	BOOL	GetTFaceList(TriObject* tri);
+	BOOL	GetTFaceList(TriObject* tri, bool flip_normals);
 	BOOL	GetCVertexList(TriObject* tri);
 	BOOL	GetCFaceList(TriObject* tri);
 	BOOL	GetMeshNormals(TriObject* tri);
-	BOOL	GetMesh(TriObject* tri);
+	BOOL	GetMesh(TriObject* tri, bool flip_normals);
 
 	// Camera object
 	TimeValue	GetCameraSettings(GenCamera* cam);

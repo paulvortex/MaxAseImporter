@@ -1,13 +1,19 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by asciiimp.rc
+// Microsoft Visual C++ generated include file.
+// Used by Plugin.rc
 //
 #define IDD_PANEL                       101
 #define IDD_ABOUTBOX                    102
 #define IDD_ASCIIIMPORT_DLG             103
+#define IDD_IMPORTING                   104
+#define IDC_IMPORTING_TEXT              1000
 #define IDC_RESETSCENE                  1002
 #define IDC_INVERSE_INHERIT             1018
 #define IDC_BUTTON1                     1019
+#define IDC_EDIT2                       1021
+#define IDC_BASEPATH                    1021
+#define IDC_IMPORTING_PROGRESS          1022
+#define IDC_IMPORTING_PROGR             1022
 
 // Next default values for new objects
 // 
@@ -15,7 +21,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        105
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1020
+#define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
