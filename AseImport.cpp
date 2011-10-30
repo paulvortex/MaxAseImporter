@@ -906,7 +906,8 @@ BOOL AsciiImp::ImportTMAnimation()
 		for (int i=0; i<rotTable.Count(); i++) 
 		{
 			RotKeeper* r = rotTable[i];
-			if (r->type == kTCB) {
+			if (r->type == kTCB)
+			{
 				ITCBRotKey rotKey;
 				rotKey.time = r->t;
 				rotKey.val = AngAxis(r->axis, r->val);
