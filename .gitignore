@@ -1,3 +1,6 @@
+# ignore max SDK dependencies folder
+sdk/
+
 #################
 ## Eclipse
 #################
