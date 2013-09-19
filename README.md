@@ -13,7 +13,7 @@ Can import
 - Shapes
 - Helpers
 
-Fixes by Pavel [VorteX] Timofeyev
+Whats fixed
 ------
 - Several code cleanups to make it work with Max 2012
 - Can import Quake 3 material names by detecting "textures/", "models/", "particles/", "gfx/" (base path should be supplied)
